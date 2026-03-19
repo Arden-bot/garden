@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arden's Garden · 句子花园</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #faf7f2;
+      --petal: #f5ede0;
+      --sage: #b8c9b0;
+      --moss: #7a9e7e;
+      --blush: #e8c4b0;
+      --rose: #d4907a;
+      --bark: #8b6f5e;
+      --ink: #3d2e28;
+      --mist: #e8eee6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--cream);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', 'ZCOOL XiaoWei', serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* floating dandelion seeds */
+    .dandelion-field {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .seed {
+      position: absolute;
+      opacity: 0;
+      animation: float linear infinite;
+    }
+
+    .seed::before {
+      content: '✦';
+      font-size: 8px;
+      color: var(--sage);
+      opacity: 0.6;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(110vh) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.7; }
+      90% { opacity: 0.4; }
+      100% { transform: translateY(-10vh) translateX(80px) rotate(360deg); opacity: 0; }
+    }
+
+    /* header */
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 20px 30px;
+    }
+
+    .garden-title {
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      color: var(--bark);
+      font-style: italic;
+    }
+
+    .garden-subtitle {
+      font-size: 0.9rem;
+      letter-spacing: 0.3em;
+      color: var(--moss);
+      margin-top: 8px;
+      font-style: normal;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--blush), transparent);
+      margin: 20px auto;
+    }
+
+    /* add button */
+    .add-btn {
+      display: inline-block;
+      margin: 10px auto 40px;
+      padding: 10px 28px;
+      border: 1px solid var(--blush);
+      background: transparent;
+      color: var(--bark);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .add-btn:hover {
+      background: var(--petal);
+      border-color: var(--rose);
+      color: var(--rose);
+    }
+
+    /* modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 46, 40, 0.3);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--cream);
+      border: 1px solid var(--blush);
+      padding: 40px;
+      max-width: 480px;
+      width: 90%;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .modal h3 {
+      font-size: 1.3rem;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--bark);
+      margin-bottom: 20px;
+      letter-spacing: 0.1em;
+    }
+
+    .modal textarea {
+      width: 100%;
+      min-height: 100px;
+      border: 1px solid var(--blush);
+      background: var(--petal);
+      padding: 12px 16px;
+      font-family: 'Cormorant Garamond', 'ZCOOL XiaoWei', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      resize: vertical;
+      border-radius: 2px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .modal textarea:focus { border-color: var(--rose); }
+
+    .modal input {
+      width: 100%;
+      border: 1px solid var(--blush);
+      background: var(--petal);
+      padding: 10px 16px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      color: var(--bark);
+      border-radius: 2px;
+      outline: none;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    .modal input:focus { border-color: var(--rose); }
+
+    .modal-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      padding: 8px 20px;
+      border: 1px solid var(--blush);
+      background: transparent;
+      color: var(--bark);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+    }
+
+    .btn-plant {
+      padding: 8px 20px;
+      border: 1px solid var(--moss);
+      background: var(--mist);
+      color: var(--moss);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+      transition: all 0.2s;
+    }
+
+    .btn-plant:hover { background: var(--sage); color: white; }
+
+    /* garden grid */
+    .garden {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 30px 80px;
+      columns: 3;
+      column-gap: 24px;
+    }
+
+    @media (max-width: 768px) { .garden { columns: 2; } }
+    @media (max-width: 480px) { .garden { columns: 1; } }
+
+    /* each sentence card = a plant */
+    .plant {
+      break-inside: avoid;
+      margin-bottom: 24px;
+      padding: 24px 20px 20px;
+      background: var(--petal);
+      border: 1px solid transparent;
+      border-radius: 2px;
+      position: relative;
+      cursor: default;
+      transition: all 0.4s ease;
+      animation: bloom 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes bloom {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .plant:hover {
+      border-color: var(--blush);
+      box-shadow: 0 4px 20px rgba(184, 144, 122, 0.12);
+      transform: translateY(-2px);
+    }
+
+    /* plant type indicator */
+    .plant-icon {
+      position: absolute;
+      top: -10px;
+      left: 20px;
+      font-size: 18px;
+      filter: saturate(0.8);
+    }
+
+    .plant-text {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--ink);
+      font-style: italic;
+      margin-top: 8px;
+    }
+
+    .plant-source {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      color: var(--rose);
+      text-transform: uppercase;
+    }
+
+    .plant-date {
+      font-size: 0.72rem;
+      color: var(--sage);
+      margin-top: 4px;
+      letter-spacing: 0.1em;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--blush);
+      cursor: pointer;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      line-height: 1;
+    }
+
+    .plant:hover .delete-btn { opacity: 1; }
+    .delete-btn:hover { color: var(--rose); }
+
+    /* empty state */
+    .empty-garden {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--sage);
+      font-style: italic;
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      grid-column: 1 / -1;
+    }
+
+    /* ground decoration */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 20px;
+      color: var(--sage);
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+    }
+
+    /* plant type colors */
+    .plant[data-type="0"] { background: #fdf5f0; }
+    .plant[data-type="1"] { background: #f2f7f2; }
+    .plant[data-type="2"] { background: #f5f2f8; }
+    .plant[data-type="3"] { background: #fdf8ed; }
+    .plant[data-type="4"] { background: #f0f5f8; }
+  </style>
+</head>
+<body>
+
+  <!-- floating dandelion seeds -->
+  <div class="dandelion-field" id="dandelionField"></div>
+
+  <header>
+    <h1 class="garden-title">Arden's Garden</h1>
+    <p class="garden-subtitle">句子花园 · A place for words to grow</p>
+    <div class="divider"></div>
+    <button class="add-btn" onclick="openModal()">＋ 种下一句话</button>
+  </header>
+
+  <!-- add sentence modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>种下一颗种子</h3>
+      <textarea id="sentenceInput" placeholder="写下你想记住的句子……"></textarea>
+      <input type="text" id="sourceInput" placeholder="来源（可选）· source"/>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">取消</button>
+        <button class="btn-plant" onclick="plantSentence()">🌱 种下</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- garden -->
+  <main class="garden" id="garden"></main>
+
+  <footer>every word is a seed · 每一句话都是一粒种子</footer>
+
+  <script>
+    const PLANTS = ['🌸', '🌿', '🌼', '🍃', '🌾', '🌷', '☘️', '🌻'];
+    const STORAGE_KEY = 'arden_garden_sentences';
+
+    function loadSentences() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch { return []; }
+    }
+
+    function saveSentences(sentences) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sentences));
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return `${d.getFullYear()} · ${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function renderGarden() {
+      const garden = document.getElementById('garden');
+      const sentences = loadSentences();
+      garden.innerHTML = '';
+
+      if (sentences.length === 0) {
+        garden.innerHTML = '<p class="empty-garden">花园还空着……种下第一句话吧 🌱</p>';
+        return;
+      }
+
+      sentences.slice().reverse().forEach((item, i) => {
+        const typeIndex = i % 5;
+        const icon = PLANTS[i % PLANTS.length];
+        const div = document.createElement('div');
+        div.className = 'plant';
+        div.setAttribute('data-type', typeIndex);
+        div.style.animationDelay = `${i * 0.08}s`;
+        div.innerHTML = `
+          <span class="plant-icon">${icon}</span>
+          <button class="delete-btn" onclick="deleteSentence('${item.id}')" title="删除">✕</button>
+          <p class="plant-text">${item.text}</p>
+          ${item.source ? `<p class="plant-source">— ${item.source}</p>` : ''}
+          <p class="plant-date">${formatDate(item.date)}</p>
+        `;
+        garden.appendChild(div);
+      });
+    }
+
+    function openModal() {
+      document.getElementById('modalOverlay').classList.add('active');
+      document.getElementById('sentenceInput').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+      document.getElementById('sentenceInput').value = '';
+      document.getElementById('sourceInput').value = '';
+    }
+
+    function plantSentence() {
+      const text = document.getElementById('sentenceInput').value.trim();
+      if (!text) return;
+      const source = document.getElementById('sourceInput').value.trim();
+      const sentences = loadSentences();
+      sentences.push({
+        id: Date.now().toString(),
+        text,
+        source,
+        date: new Date().toISOString()
+      });
+      saveSentences(sentences);
+      closeModal();
+      renderGarden();
+    }
+
+    function deleteSentence(id) {
+      const sentences = loadSentences().filter(s => s.id !== id);
+      saveSentences(sentences);
+      renderGarden();
+    }
+
+    // close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // keyboard shortcut
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') plantSentence();
+    });
+
+    // generate floating dandelion seeds
+    function createSeeds() {
+      const field = document.getElementById('dandelionField');
+      for (let i = 0; i < 18; i++) {
+        const seed = document.createElement('div');
+        seed.className = 'seed';
+        seed.style.left = `${Math.random() * 100}%`;
+        seed.style.animationDuration = `${8 + Math.random() * 14}s`;
+        seed.style.animationDelay = `${Math.random() * 10}s`;
+        field.appendChild(seed);
+      }
+    }
+
+    createSeeds();
+    renderGarden();
+  </script>
+</body>
+</html>
